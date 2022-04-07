@@ -1,6 +1,6 @@
 module github.com/bitrainforest/datastore
 
-go 1.18
+go 1.17
 
 require (
 	github.com/minio/minio-go/v7 v7.0.23
