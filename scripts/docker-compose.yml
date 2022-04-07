@@ -1,0 +1,11 @@
+version: "3.9"
+
+#todo: health check
+services:
+  minio:
+    image: minio/minio
+    container_name: datastore-test-s3
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
