@@ -1,10 +1,12 @@
-package datastore
+package fs
 
 import (
 	"bytes"
 	"context"
+	"github.com/bitrainforest/datastore/store"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -15,39 +17,37 @@ const (
 	testBucket         = "test"
 )
 
-func makeStore(t *testing.T) Store {
-	t.Helper()
+var st store.Store
 
-	st, err := NewS3("127.0.0.1:9000", "minioadmin", "minioadmin", false)
-	require.NoError(t, err)
-
-	return st
+func init() {
+	dir, err := os.MkdirTemp("", "datastore-fs-test")
+	if err != nil {
+		panic(err)
+	}
+	s, err := New(dir)
+	if err != nil {
+		panic(err)
+	}
+	st = s
 }
 
-func TestS3New(t *testing.T) {
-	st := makeStore(t)
-
+func TestNew(t *testing.T) {
 	require.NotNil(t, st)
 }
 
-func TestS3_CreateBucket(t *testing.T) {
-	st := makeStore(t)
-
+func Test_CreateBucket(t *testing.T) {
 	err := st.CreateBucket(context.Background(), testBucket)
-
 	require.NoError(t, err)
 }
 
-func TestS3_Write(t *testing.T) {
-	st := makeStore(t)
+func Test_Write(t *testing.T) {
 	ctx := context.TODO()
 
 	err := st.Write(ctx, testBucket, testFilename, []byte(testFileValue))
 	require.NoError(t, err)
 }
 
-func TestS3_Read(t *testing.T) {
-	st := makeStore(t)
+func Test_Read(t *testing.T) {
 	ctx := context.TODO()
 
 	data, err := st.Read(ctx, testBucket, testFilename)
@@ -55,30 +55,27 @@ func TestS3_Read(t *testing.T) {
 	require.Equal(t, testFileValue, string(data))
 }
 
-func TestS3_WriteSteam(t *testing.T) {
-	st := makeStore(t)
+func Test_WriteSteam(t *testing.T) {
 	ctx := context.TODO()
 
 	err := st.WriteStream(ctx, testBucket, testStreamFilename, bytes.NewReader([]byte(testFileValue)))
 	require.NoError(t, err)
 }
 
-func TestS3_ReadStream(t *testing.T) {
-	st := makeStore(t)
+func Test_ReadStream(t *testing.T) {
 	ctx := context.TODO()
 
 	reader, err := st.ReadStream(ctx, testBucket, testStreamFilename)
 	require.NoError(t, err)
 
-	defer reader.Close()
+	defer reader.Close() // nolint: errcheck
 	b, err := ioutil.ReadAll(reader)
 
 	require.NoError(t, err)
 	require.Equal(t, testFileValue, string(b))
 }
 
-func TestS3_Delete(t *testing.T) {
-	st := makeStore(t)
+func Test_Delete(t *testing.T) {
 	ctx := context.TODO()
 
 	err := st.Delete(ctx, testBucket, testFilename)

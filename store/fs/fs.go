@@ -1,19 +1,21 @@
-package datastore
+package fs
 
 import (
 	"context"
 	"fmt"
+	"github.com/bitrainforest/datastore/store"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 )
 
 type FS struct {
 	path string
 }
 
-func NewFS(path string) (Store, error) {
+func New(path string) (store.Store, error) {
 	if err := initPath(path); err != nil {
 		return nil, err
 	}
@@ -45,11 +47,23 @@ func (s *FS) ReadStream(_ context.Context, bucket, key string) (io.ReadCloser, e
 }
 
 func (s *FS) Write(_ context.Context, bucket, key string, value []byte) error {
-	return ioutil.WriteFile(path.Join(s.path, bucket, key), value, 0644)
+	key = path.Join(s.path, bucket, key)
+	sp := strings.Split(key, "/")
+	dir := strings.Join(sp[:len(sp)-1], "/")
+	if err := initPath(dir); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(key, value, 0644)
 }
 
 func (s *FS) WriteStream(_ context.Context, bucket, key string, value io.Reader) error {
-	file, err := os.Create(path.Join(s.path, bucket, key))
+	key = path.Join(s.path, bucket, key)
+	sp := strings.Split(key, "/")
+	dir := strings.Join(sp[:len(sp)-1], "/")
+	if err := initPath(dir); err != nil {
+		return err
+	}
+	file, err := os.Create(key)
 	if err != nil {
 		return err
 	}
@@ -61,7 +75,7 @@ func (s *FS) Delete(_ context.Context, bucket, key string) error {
 	return os.Remove(path.Join(s.path, bucket, key))
 }
 
-var _ Store = (*FS)(nil)
+var _ store.Store = (*FS)(nil)
 
 func initPath(path string) error {
 	s, err := os.Stat(path)
@@ -70,6 +84,7 @@ func initPath(path string) error {
 			if err := os.MkdirAll(path, 0755); err != nil {
 				return err
 			}
+			s, err = os.Stat(path)
 		} else {
 			return err
 		}

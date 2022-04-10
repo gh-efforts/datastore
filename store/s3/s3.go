@@ -1,8 +1,9 @@
-package datastore
+package s3
 
 import (
 	"bytes"
 	"context"
+	"github.com/bitrainforest/datastore/store"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"io"
@@ -56,7 +57,7 @@ func (s *S3) Delete(ctx context.Context, bucket, key string) error {
 	return s.client.RemoveObject(ctx, bucket, key, minio.RemoveObjectOptions{})
 }
 
-func NewS3(endpoint string, accessKeyID string, secretAccessKey string, secure bool) (Store, error) {
+func New(endpoint string, accessKeyID string, secretAccessKey string, secure bool) (store.Store, error) {
 
 	client, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
@@ -76,4 +77,4 @@ func NewS3(endpoint string, accessKeyID string, secretAccessKey string, secure b
 	}, nil
 }
 
-var _ Store = (*S3)(nil)
+var _ store.Store = (*S3)(nil)
