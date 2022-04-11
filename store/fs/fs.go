@@ -48,9 +48,7 @@ func (s *FS) ReadStream(_ context.Context, bucket, key string) (io.ReadCloser, e
 
 func (s *FS) Write(_ context.Context, bucket, key string, value []byte) error {
 	key = path.Join(s.path, bucket, key)
-	sp := strings.Split(key, "/")
-	dir := strings.Join(sp[:len(sp)-1], "/")
-	if err := initPath(dir); err != nil {
+	if err := s.preparePath(key); err != nil {
 		return err
 	}
 	return ioutil.WriteFile(key, value, 0644)
@@ -58,9 +56,7 @@ func (s *FS) Write(_ context.Context, bucket, key string, value []byte) error {
 
 func (s *FS) WriteStream(_ context.Context, bucket, key string, value io.Reader) error {
 	key = path.Join(s.path, bucket, key)
-	sp := strings.Split(key, "/")
-	dir := strings.Join(sp[:len(sp)-1], "/")
-	if err := initPath(dir); err != nil {
+	if err := s.preparePath(key); err != nil {
 		return err
 	}
 	file, err := os.Create(key)
@@ -85,6 +81,9 @@ func initPath(path string) error {
 				return err
 			}
 			s, err = os.Stat(path)
+			if err != nil {
+				return err
+			}
 		} else {
 			return err
 		}
@@ -94,5 +93,14 @@ func initPath(path string) error {
 		return fmt.Errorf("%s is not a directory", path)
 	}
 
+	return nil
+}
+
+func (s *FS) preparePath(key string) error {
+	sp := strings.Split(key, "/")
+	dir := strings.Join(sp[:len(sp)-1], "/")
+	if err := initPath(dir); err != nil {
+		return err
+	}
 	return nil
 }
