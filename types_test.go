@@ -1,14 +1,15 @@
 package datastore
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewKey(t *testing.T) {
 	tests := []struct {
 		ft        KeyType
-		height    uint64
+		height    int64
 		expectKey *Key
 	}{
 		{
@@ -144,6 +145,15 @@ func TestParseKey(t *testing.T) {
 			key:         "snapshot/11/100012.car",
 			expectError: true,
 			expectKey:   nil,
+		},
+		{
+			name:        "latest snapshot",
+			key:         "snapshot/latest.car",
+			expectError: false,
+			expectKey: &Key{
+				height: -1,
+				ft:     Snapshot,
+			},
 		},
 	}
 

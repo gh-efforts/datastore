@@ -3,10 +3,11 @@ package s3
 import (
 	"bytes"
 	"context"
-	"github.com/bitrainforest/datastore/store"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"testing"
+
+	"github.com/bitrainforest/datastore/store"
+	"github.com/stretchr/testify/require"
 )
 
 const (

@@ -3,11 +3,12 @@ package datastore
 import (
 	"bytes"
 	"context"
-	"github.com/bitrainforest/datastore/store/fs"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/bitrainforest/datastore/store/fs"
+	"github.com/stretchr/testify/require"
 )
 
 var ds *Datastore

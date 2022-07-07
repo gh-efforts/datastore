@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const splitWidth = 10000
+const splitWidth int64 = 10000
 
 type KeyType string
 
@@ -28,11 +28,11 @@ func init() {
 }
 
 type Key struct {
-	height uint64
+	height int64
 	ft     KeyType
 }
 
-func NewKey(height uint64, ft KeyType) *Key {
+func NewKey(height int64, ft KeyType) *Key {
 	return &Key{
 		height: height,
 		ft:     ft,
@@ -48,28 +48,33 @@ func ParseKey(key string) (*Key, error) {
 
 	sp := strings.Split(key, "/")
 
-	if len(sp) == 2 {
+	switch {
+	case len(sp) == 2:
 		kt = KeyType(sp[0])
 		name = sp[1]
-	} else if len(sp) == 3 {
+	case len(sp) == 3:
 		kt = KeyType(sp[0])
 		prefix = sp[1]
 		name = sp[2]
-	} else {
+	default:
 		return nil, errors.New("invalid key")
 	}
-
 	if _, ok := KeyTypeMap[kt]; !ok {
 		return nil, errors.New("invalid key type")
 	}
-	fmt.Println(string(kt), prefix, name)
 	suf := strings.Split(name, ".")
 	if len(suf) != 2 {
 		return nil, errors.New("invalid key suffix")
 	}
-	h, err := strconv.ParseUint(suf[0], 10, 64)
-	if err != nil {
-		return nil, err
+	var h int64
+	if suf[0] == "latest" {
+		h = -1
+	} else {
+		pr, err := strconv.ParseInt(suf[0], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		h = pr
 	}
 
 	switch kt {
@@ -88,7 +93,7 @@ func ParseKey(key string) (*Key, error) {
 			return nil, fmt.Errorf("invalid key prefix: %s, expect: %s", prefix, "")
 		}
 	} else {
-		p := strconv.FormatUint(h/splitWidth, 10)
+		p := strconv.FormatInt(h/splitWidth, 10)
 		if prefix != p {
 			return nil, fmt.Errorf("invalid key prefix: %s, expect: %s", prefix, p)
 		}
@@ -112,11 +117,11 @@ func (k *Key) Type() KeyType {
 	return k.ft
 }
 
-func (k *Key) Height() uint64 {
+func (k *Key) Height() int64 {
 	return k.height
 }
 
-func KeyBuilder(kt KeyType, height uint64, splitPrefix bool) string {
+func KeyBuilder(kt KeyType, height int64, splitPrefix bool) string {
 	var suffix string
 	switch kt {
 	case Snapshot, Compacted:

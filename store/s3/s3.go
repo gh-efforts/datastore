@@ -3,11 +3,12 @@ package s3
 import (
 	"bytes"
 	"context"
+	"io"
+	"io/ioutil"
+
 	"github.com/bitrainforest/datastore/store"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"io"
-	"io/ioutil"
 )
 
 type S3 struct {
@@ -55,6 +56,17 @@ func (s *S3) WriteStream(ctx context.Context, bucket, key string, value io.Reade
 
 func (s *S3) Delete(ctx context.Context, bucket, key string) error {
 	return s.client.RemoveObject(ctx, bucket, key, minio.RemoveObjectOptions{})
+}
+
+func (s *S3) Copy(ctx context.Context, bucket, from, to string) error {
+	_, err := s.client.CopyObject(ctx, minio.CopyDestOptions{
+		Bucket: bucket,
+		Object: to,
+	}, minio.CopySrcOptions{
+		Bucket: bucket,
+		Object: from,
+	})
+	return err
 }
 
 func New(endpoint string, accessKeyID string, secretAccessKey string, secure bool) (store.Store, error) {

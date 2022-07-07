@@ -3,11 +3,12 @@ package fs
 import (
 	"bytes"
 	"context"
-	"github.com/bitrainforest/datastore/store"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/bitrainforest/datastore/store"
+	"github.com/stretchr/testify/require"
 )
 
 const (

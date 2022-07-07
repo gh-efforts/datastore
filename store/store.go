@@ -12,4 +12,5 @@ type Store interface {
 	Write(ctx context.Context, bucket, key string, value []byte) error
 	WriteStream(ctx context.Context, bucket, key string, value io.Reader) error
 	Delete(ctx context.Context, bucket, key string) error
+	Copy(ctx context.Context, bucket, from, to string) error
 }

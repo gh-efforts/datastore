@@ -3,12 +3,13 @@ package fs
 import (
 	"context"
 	"fmt"
-	"github.com/bitrainforest/datastore/store"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/bitrainforest/datastore/store"
 )
 
 type FS struct {
@@ -51,7 +52,7 @@ func (s *FS) Write(_ context.Context, bucket, key string, value []byte) error {
 	if err := s.preparePath(key); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(key, value, 0644)
+	return ioutil.WriteFile(key, value, 0600)
 }
 
 func (s *FS) WriteStream(_ context.Context, bucket, key string, value io.Reader) error {
@@ -71,13 +72,48 @@ func (s *FS) Delete(_ context.Context, bucket, key string) error {
 	return os.Remove(path.Join(s.path, bucket, key))
 }
 
+func (s *FS) Copy(_ context.Context, bucket, from, to string) error {
+	buf := make([]byte, 10240)
+	fromFile, err := os.Open(path.Join(s.path, bucket, from))
+	if err != nil {
+		return err
+	}
+
+	defer fromFile.Close() // nolint: errcheck
+
+	toFile, err := os.Create(path.Join(s.path, bucket, to))
+	if err != nil {
+		return err
+	}
+
+	defer toFile.Close() // nolint: errcheck
+
+	for {
+		var n int
+		n, err = fromFile.Read(buf)
+		if err != nil && err != io.EOF {
+			return err
+		}
+
+		if n == 0 {
+			break
+		}
+
+		if _, err = toFile.Write(buf[:n]); err != nil {
+			return err
+		}
+	}
+
+	return err
+}
+
 var _ store.Store = (*FS)(nil)
 
 func initPath(path string) error {
 	s, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			if err := os.MkdirAll(path, 0755); err != nil {
+			if err = os.MkdirAll(path, 0755); err != nil {
 				return err
 			}
 			s, err = os.Stat(path)
